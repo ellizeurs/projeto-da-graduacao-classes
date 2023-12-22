@@ -1,9 +1,10 @@
-from torch_generic_model import TorchGenericModel
+import torch
+
+from .torch_generic_model import TorchGenericModel
 
 from window.sliding_window import SlidingWindow
 from window.takens import Takens
 
-import torch
 
 class NARX(TorchGenericModel):
     def __init__(
