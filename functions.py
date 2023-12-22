@@ -5,11 +5,11 @@ import math
 
 import torch
 
-from TimeSeries import TimeSeries
+from .TimeSeries import TimeSeries
 from darts.metrics import mape
 
-from const import FIG_SIZE
-from metrics.sle import sle
+from .const import FIG_SIZE
+from .metrics.sle import sle
 
 def plot_trend_line(series, title=None, order=1):
     plt.figure(figsize=FIG_SIZE)

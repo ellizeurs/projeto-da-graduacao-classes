@@ -1,7 +1,7 @@
-from torch_generic_model import TorchGenericModel
+from .torch_generic_model import TorchGenericModel
 
-from window.sliding_window import SlidingWindow
-from window.takens import Takens
+from .window.sliding_window import SlidingWindow
+from .window.takens import Takens
 
 import torch
 

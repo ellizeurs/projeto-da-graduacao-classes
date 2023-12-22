@@ -1,4 +1,4 @@
-from TimeSeries import TimeSeries
+from .TimeSeries import TimeSeries
 import numpy as np
 import pandas as pd
 
