@@ -7,7 +7,6 @@ import torch
 class Takens(WindowGenericModel):
     def __init__(
         self,
-        m=3,
         tau=1,
         input_chunk_length=None,
         output_chunk_length=None,
@@ -18,7 +17,6 @@ class Takens(WindowGenericModel):
             output_chunk_length,
             batch_size,
         )
-        self.m = m
         self.tau = tau
 
     def embed_time_series(self, series):
@@ -37,10 +35,10 @@ class Takens(WindowGenericModel):
         if series == None:
             raise ValueError("This class is not defined")
         N = len(series)
-        embedded = np.zeros((N - (self.m - 1) * self.tau, self.m))
+        embedded = np.zeros((N - (self.input_chunk_length - 1) * self.tau, self.input_chunk_length))
 
-        for i in range(N - (self.m - 1) * self.tau):
-            for j in range(self.m):
+        for i in range(N - (self.input_chunk_length - 1) * self.tau):
+            for j in range(self.input_chunk_length):
                 embedded[i, j] = series[i + j * self.tau]
 
         inputs = embedded
