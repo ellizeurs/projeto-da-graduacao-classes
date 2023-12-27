@@ -3,7 +3,6 @@ import torch
 from .torch_generic_model import TorchGenericModel
 
 from .window.sliding_window import SlidingWindow
-from .window.takens import Takens
 
 
 class NARX(TorchGenericModel):
