@@ -32,9 +32,8 @@ class TorchGenericModel(torch.nn.Module):
         self.loss_fn = loss_fn
         self.optimizer = None
 
-        self.window_model = window_model(
-            input_chunk_length, output_chunk_length, batch_size
-        )
+        self.window_model = window_model
+        self.window_model(input_chunk_length, output_chunk_length, batch_size)
         self.device = device
 
     def forward(self, x):
