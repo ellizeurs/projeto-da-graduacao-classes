@@ -5,6 +5,7 @@ from .window.takens import Takens
 
 import torch
 
+
 class DA_RNN(TorchGenericModel):
     def __init__(
         self,
@@ -19,7 +20,7 @@ class DA_RNN(TorchGenericModel):
         random_state=None,
         loss_fn=torch.nn.MSELoss(),
         optimizer_cls=torch.optim.Adam,
-        window_model=SlidingWindow,
+        window_model=SlidingWindow(),
     ):
         super().__init__(
             input_chunk_length,
@@ -46,41 +47,3 @@ class DA_RNN(TorchGenericModel):
         out, _ = self.rnn(x)
         out = self.fc(out)
         return out
-    
-
-class DA_RNN_Takens(DA_RNN):
-    def __init__(
-        self,
-        input_chunk_length,
-        output_chunk_length,
-        hidden_size=32,
-        batch_size=32,
-        num_heads_attention=4,
-        dropout=0.1,
-        lr=0.01,
-        n_epochs=100,
-        random_state=None,
-        takens_kwargs = {'tau': 1},
-        loss_fn=torch.nn.MSELoss(),
-        optimizer_cls=torch.optim.Adam,
-    ):
-        super().__init__(
-            input_chunk_length,
-            output_chunk_length,
-            hidden_size,
-            batch_size,
-            num_heads_attention,
-            dropout,
-            lr,
-            n_epochs,
-            random_state,
-            loss_fn,
-            optimizer_cls,
-        )
-
-        self.takens_tau = takens_kwargs['tau']
-        self.window_model = Takens(
-            input_chunk_length, output_chunk_length, batch_size, takens_kwargs['tau']
-        )
-
-        self.optimizer = optimizer_cls(self.parameters(), lr=lr)

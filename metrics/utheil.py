@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class UTheil:
     def __init__(self):
         pass

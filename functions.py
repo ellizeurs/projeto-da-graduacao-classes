@@ -11,6 +11,7 @@ from darts.metrics import mape
 from .const import FIG_SIZE
 from .metrics.sle import sle
 
+
 def plot_trend_line(series, title=None, order=1):
     plt.figure(figsize=FIG_SIZE)
     if title:
@@ -18,6 +19,7 @@ def plot_trend_line(series, title=None, order=1):
     series.plot()
     (series - series.detrend(order)).plot(label="trend line")
     plt.show()
+
 
 def plot_series(series, title=None):
     plt.figure(figsize=FIG_SIZE)
@@ -29,6 +31,7 @@ def plot_series(series, title=None):
         for serie in series:
             serie.plot()
     plt.show()
+
 
 def plot_series_labels(series, labels, title=None):
     plt.figure(figsize=FIG_SIZE)
@@ -132,10 +135,12 @@ def eval_model(
         return returned_f
     except:
         return None
-    
+
+
 def calculate_dates_diff(start, end, freq="D"):
     date_range = pd.date_range(start=start, end=end, freq=freq)
     return len(date_range)
+
 
 def set_pl_trainer_kwargs(**kwargs):
     pl_trainer_kwargs = kwargs

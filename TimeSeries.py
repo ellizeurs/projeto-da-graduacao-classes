@@ -8,6 +8,7 @@ from darts.dataprocessing.transformers import Scaler
 from darts.models.filtering.moving_average_filter import MovingAverageFilter
 from darts.utils.statistics import check_seasonality, plot_acf
 
+
 def TimeSeriesRatio(self):
     ratio_series = self.pd_series().div(self.pd_series().shift(1))[1:]
     ratio_dataframe = ratio_series.to_frame(name=f"{self.columns[0]}_ratio")

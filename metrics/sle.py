@@ -1,6 +1,7 @@
 import math
 import numpy as np
 
+
 # squared_log_error
 def sle(y_true, y_pred):
     y_true_num = []

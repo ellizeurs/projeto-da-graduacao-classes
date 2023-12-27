@@ -6,6 +6,7 @@ from ..TimeSeries import TimeSeries
 
 import random
 
+
 class RandomWalkModel:
     def __init__(self, step=1, random_state=None):
         self.step = step

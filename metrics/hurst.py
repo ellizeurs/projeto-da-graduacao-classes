@@ -3,6 +3,7 @@ from ..TimeSeries import TimeSeries
 
 import warnings
 
+
 class Hurst:
     """
     H < 0,5: série temporal anti-persistente (traduz-se aproximadamente em mercado lateral).
@@ -41,8 +42,7 @@ class Hurst:
                 cc2 = my - cc1 * mx
                 ddVd = dV - cc1
                 VVVd = (
-                    VV - np.multiply(cc1, np.arange(1, N + 1,
-                                     dtype=np.float64)) - cc2
+                    VV - np.multiply(cc1, np.arange(1, N + 1, dtype=np.float64)) - cc2
                 )
                 mcord[tt - 1] = np.mean(np.abs(ddVd) ** self.q) / np.mean(
                     np.abs(VVVd) ** self.q

@@ -2,6 +2,7 @@ from .TimeSeries import TimeSeries
 import numpy as np
 import pandas as pd
 
+
 class Detrend:
     def __init__(self):
         self.trend_line = None

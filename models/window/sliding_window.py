@@ -1,17 +1,25 @@
 import numpy as np
-from ...TimeSeries import TimeSeries
+from .window_generic_model import WindowGenericModel
 
 import torch
 
-class SlidingWindow:
-    def __init__(self, input_chunk_length, output_chunk_length, batch_size):
-        self.input_chunk_length = input_chunk_length
-        self.output_chunk_length = output_chunk_length
-        self.batch_size = batch_size
+
+class SlidingWindow(WindowGenericModel):
+    def __init__(
+        self, input_chunk_length=None, output_chunk_length=None, batch_size=None
+    ):
+        super().__init__(
+            input_chunk_length,
+            output_chunk_length,
+            batch_size,
+        )
 
     def embed_time_series(self, series):
-        if type(series) == TimeSeries:
-            series = series.univariate_values()
+        series = super().embed_time_series(
+            series,
+        )
+        if series == None:
+            raise ValueError("This class is not defined")
         data = []
         for i in range(
             0,

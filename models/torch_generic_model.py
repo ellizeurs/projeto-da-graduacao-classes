@@ -7,6 +7,7 @@ import torch
 
 from ..TimeSeries import TimeSeries
 
+
 class TorchGenericModel(torch.nn.Module):
     def __init__(
         self,
@@ -68,7 +69,9 @@ class TorchGenericModel(torch.nn.Module):
                     for serie in series:
                         for batch_inputs, batch_labels in serie:
                             predictions = model.forward(batch_inputs.to(self.device))
-                            loss = self.loss_fn(predictions, batch_labels.to(self.device))
+                            loss = self.loss_fn(
+                                predictions, batch_labels.to(self.device)
+                            )
 
                             self.optimizer.zero_grad()
                             loss.backward()
@@ -109,9 +112,9 @@ class TorchGenericModel(torch.nn.Module):
         with tqdm(total=n, desc="Prediction") as progress_bar:
             for _ in range(n // self.output_chunk_length + 1):
                 output = model.forward(
-                    torch.tensor(test_input, dtype=torch.float32).view(
-                        1, self.input_chunk_length
-                    ).to(self.device)
+                    torch.tensor(test_input, dtype=torch.float32)
+                    .view(1, self.input_chunk_length)
+                    .to(self.device)
                 )
                 for predicted_value in output.numpy(force=True)[0]:
                     predicted_outputs.append(predicted_value)

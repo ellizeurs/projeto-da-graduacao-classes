@@ -1,14 +1,25 @@
 import numpy as np
-from ...TimeSeries import TimeSeries
+from .window_generic_model import WindowGenericModel
 
 import torch
 
-class Takens:
-    def __init__(self, m=3, output=1, batch_size=4, tau=1):
+
+class Takens(WindowGenericModel):
+    def __init__(
+        self,
+        m=3,
+        tau=1,
+        input_chunk_length=None,
+        output_chunk_length=None,
+        batch_size=None,
+    ):
+        super().__init__(
+            input_chunk_length,
+            output_chunk_length,
+            batch_size,
+        )
         self.m = m
         self.tau = tau
-        self.output = output
-        self.batch_size = batch_size
 
     def embed_time_series(self, series):
         """
@@ -20,8 +31,11 @@ class Takens:
         Retorna:
         - Uma matriz numpy com as sequências de m pontos incorporados no espaço de fase.
         """
-        if type(series) == TimeSeries:
-            series = series.univariate_values()
+        series = super().embed_time_series(
+            series,
+        )
+        if series == None:
+            raise ValueError("This class is not defined")
         N = len(series)
         embedded = np.zeros((N - (self.m - 1) * self.tau, self.m))
 
@@ -59,6 +73,12 @@ class Takens:
         Retorna:
         - A série temporal unidimensional reconstruída (numpy array).
         """
+        embedded_data = super().embed_time_series(
+            embedded_data,
+        )
+        if embedded_data == None:
+            raise ValueError("This class is not defined")
+
         N, m = embedded_data.shape
         original_length = N + (m - 1) * self.tau
         original_data = np.zeros(original_length)
