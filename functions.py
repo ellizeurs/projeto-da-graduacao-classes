@@ -164,3 +164,10 @@ def set_pl_trainer_kwargs(**kwargs):
             pass
 
     return pl_trainer_kwargs
+
+def info_message(message):
+    cor_vermelha = "\033[91m"
+    reset_cor = "\033[0m"
+
+    # Imprime a mensagem em vermelho
+    print(f"{cor_vermelha}INFO:   {reset_cor}{message}")
