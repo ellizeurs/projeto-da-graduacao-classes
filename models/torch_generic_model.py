@@ -63,7 +63,7 @@ class TorchGenericModel(torch.nn.Module):
 
         try:
             with tqdm(total=self.n_epochs, desc="Epoch") as progress_bar:
-                for _ in range(self.n_epochs):
+                for epoch in range(self.n_epochs):
                     total_loss = 0.0
                     for serie in series:
                         for batch_inputs, batch_labels in serie:
@@ -80,7 +80,7 @@ class TorchGenericModel(torch.nn.Module):
                     progress_bar.update(1)
                     progress_bar.set_postfix(loss=total_loss)
         except KeyboardInterrupt:
-            pass
+            self.n_epochs = epoch
 
     def predict(self, n, series=None):
         if not self.fit_called:
