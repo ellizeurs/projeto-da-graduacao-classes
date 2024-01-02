@@ -165,6 +165,9 @@ def set_pl_trainer_kwargs(**kwargs):
 
     return pl_trainer_kwargs
 
+def is_decreasing(array):
+  return array == sorted(array, reverse=True)
+
 def info_message(message):
     cor_vermelha = "\033[91m"
     reset_cor = "\033[0m"

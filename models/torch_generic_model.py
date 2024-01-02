@@ -18,6 +18,7 @@ class TorchGenericModel(torch.nn.Module):
         n_epochs,
         random_state,
         window_model,
+        stopping_model,
         device,
     ):
         super().__init__()
@@ -34,6 +35,7 @@ class TorchGenericModel(torch.nn.Module):
 
         self.window_model = window_model
         self.window_model(input_chunk_length, output_chunk_length, batch_size)
+        self.stopping_model = stopping_model
         self.device = device
 
     def forward(self, x):
@@ -79,7 +81,11 @@ class TorchGenericModel(torch.nn.Module):
 
                     progress_bar.update(1)
                     progress_bar.set_postfix(loss=total_loss)
+                    if self.stopping_model != None:
+                        self.stopping_model(total_loss)
         except KeyboardInterrupt:
+            self.n_epochs = epoch
+        except StopIteration:
             self.n_epochs = epoch
 
     def predict(self, n, series=None):

@@ -18,6 +18,7 @@ class MLP(TorchGenericModel):
         loss_fn=torch.nn.MSELoss(),
         optimizer_cls=torch.optim.Adam,
         window_model=SlidingWindow(),
+        stopping_model=None,
         device="cpu",
     ):
         super().__init__(
@@ -28,6 +29,7 @@ class MLP(TorchGenericModel):
             n_epochs,
             random_state,
             window_model,
+            stopping_model,
             device,
         )
 
