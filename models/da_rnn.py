@@ -15,7 +15,7 @@ class DA_RNN(TorchGenericModel):
         batch_size=32,
         num_heads_attention=4,
         dropout=0.1,
-        lr=0.01,
+        lr=1e-3,
         n_epochs=100,
         random_state=None,
         loss_fn=torch.nn.MSELoss(),

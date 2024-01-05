@@ -12,7 +12,7 @@ class NARX(TorchGenericModel):
         output_chunk_length,
         hidden_size=32,
         batch_size=32,
-        lr=0.01,
+        lr=1e-3,
         n_epochs=100,
         random_state=None,
         loss_fn=torch.nn.MSELoss(),
