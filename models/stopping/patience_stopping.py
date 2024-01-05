@@ -13,9 +13,5 @@ class PatienceStopping:
         self.last_losses = self.last_losses[:self.patience]
 
         if len(self.last_losses) == self.patience:
-            if not is_decreasing(self.last_losses):
-                for i in range(1, self.patience):
-                    if self.last_losses[i] > self.last_losses[i-1] + self.min_delta:
-                        raise StopIteration('loss is increasing')
-            else:
+            if self.last_losses[0] > self.last_losses[-1] - self.min_delta:
                 raise StopIteration('loss is increasing')
