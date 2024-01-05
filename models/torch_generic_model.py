@@ -142,3 +142,9 @@ class TorchGenericModel(torch.nn.Module):
                 predicted_outputs[:n],
             )
         return predicted_outputs
+
+    def __str__(self):
+        return f"{self.__class__.__name__}({', '.join(f'{nome}={valor}'
+                                                for nome, valor
+                                                in self.__dict__.items()
+                                                if not nome.startswith("_"))})"

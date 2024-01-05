@@ -15,3 +15,9 @@ class PatienceStopping:
         if len(self.last_losses) == self.patience:
             if self.last_losses[0] > self.last_losses[-1] - self.min_delta:
                 raise StopIteration('loss is increasing')
+            
+    def __str__(self):
+        return f"{self.__class__.__name__}({', '.join(f'{nome}={valor}'
+                                                for nome, valor
+                                                in self.__dict__.items()
+                                                if not nome.startswith("_"))})"
