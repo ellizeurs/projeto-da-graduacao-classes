@@ -33,7 +33,9 @@ class WindowGenericModel:
         self.batch_size = batch_size
 
     def __str__(self):
-        return f"{self.__class__.__name__}({', '.join(f'{nome}={valor}'
-                                                for nome, valor
-                                                in self.__dict__.items()
-                                                if not nome.startswith("_"))})"
+        return "{}({})".format(
+            self.__class__.__name__, 
+            ', '.join(f'{nome}={valor}'
+                      for nome, valor
+                      in self.__dict__.items()
+                      if not nome.startswith("_")))
