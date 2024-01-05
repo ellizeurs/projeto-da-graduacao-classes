@@ -114,7 +114,7 @@ class TorchGenericModel(torch.nn.Module):
 
         predicted_outputs = []
         model = self.to(self.device)
-        with tqdm(total=n, desc="Prediction") as progress_bar:
+        with tqdm(total=n // self.output_chunk_length + 1, desc="Prediction") as progress_bar:
             for _ in range(n // self.output_chunk_length + 1):
                 output = model.forward(
                     torch.tensor(test_input, dtype=torch.float32)
