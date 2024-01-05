@@ -45,7 +45,7 @@ class Takens(WindowGenericModel):
         labels = []
 
         for input_l in inputs:
-            labels.append(input_l[: -self.output_chunk_length])
+            labels.append(input_l[:self.output_chunk_length])
 
         # Converter os dados em tensores
         inputs = torch.stack(
