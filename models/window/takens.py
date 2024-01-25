@@ -35,17 +35,18 @@ class Takens(WindowGenericModel):
         if series == None:
             raise ValueError("This class is not defined")
         N = len(series)
-        embedded = np.zeros((N - (self.input_chunk_length - 1) * self.tau, self.input_chunk_length))
+        embedded = np.zeros((N - (self.input_chunk_length + self.output_chunk_length - 1) * self.tau, self.input_chunk_length + self.output_chunk_length))
 
-        for i in range(N - (self.input_chunk_length - 1) * self.tau):
-            for j in range(self.input_chunk_length):
+        for i in range(N - (self.input_chunk_length + self.output_chunk_length - 1) * self.tau):
+            for j in range(self.input_chunk_length + self.output_chunk_length):
                 embedded[i, j] = series[i + j * self.tau]
 
-        inputs = embedded
         labels = []
+        inputs = []
 
-        for input_l in inputs:
-            labels.append(input_l[:self.output_chunk_length])
+        for i in embedded:
+            inputs.append(i[:-self.output_chunk_length])
+            labels.append(i[-self.output_chunk_length:])
 
         # Converter os dados em tensores
         inputs = torch.stack(
