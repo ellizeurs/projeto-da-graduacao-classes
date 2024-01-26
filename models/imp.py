@@ -50,7 +50,7 @@ class IMP(TorchGenericModel):
         self.optimizer = optimizer_cls(self.parameters(), lr=lr)
 
     def forward(self, x):
-        out = torch.nn.functional.avg_pool1d(x, kernel_size=self.kernel_size, stride=1, padding=self.padding//2)
+        out = torch.nn.functional.avg_pool1d(x, kernel_size=self.kernel_size, stride=1, padding=self.padding)
         out = self.embedding(out)
         out = self.morph_layer(out)
         out = self.output_layer(out)
