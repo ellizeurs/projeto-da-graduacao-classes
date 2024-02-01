@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import math
+from datetime import datetime, timedelta
 
 import torch
 
@@ -165,8 +166,10 @@ def set_pl_trainer_kwargs(**kwargs):
 
     return pl_trainer_kwargs
 
+
 def is_decreasing(array):
-  return array == sorted(array, reverse=True)
+    return array == sorted(array, reverse=True)
+
 
 def info_message(message):
     cor_vermelha = "\033[91m"
@@ -174,3 +177,60 @@ def info_message(message):
 
     # Imprime a mensagem em vermelho
     print(f"{cor_vermelha}INFO:   {reset_cor}{message}")
+
+
+def get_first_week_day_for_month(day, year, month):
+    for dia in range(1, 10):
+        start_date = datetime(year, month, dia)
+        dia_da_semana = start_date.strftime("%A")
+        if dia_da_semana == day:
+            return start_date
+
+
+def count_month_week_days(day, year, month):
+    count = 0
+    for i in pd.date_range(
+        start="{}-{}-{}".format(
+            year, month, get_first_week_day_for_month(day, year, month).day
+        ),
+        end="{}-{}-01".format(
+            year if month < 12 else year + 1, month + 1 if month < 12 else 1
+        ),
+        freq="W-MON",
+    ):
+        count += 1 if i.month == month else 0
+    return count
+
+
+def resample_month_series_in_week_series(day, columns, df, date_index):
+    dates = pd.date_range(
+        start=get_first_week_day_for_month(
+            day, df[date_index][0].year, df[date_index][0].month
+        ),
+        end=get_first_week_day_for_month(
+            day, df[date_index][len(df) - 1].year, df[date_index][len(df) - 1].month
+        ),
+        freq="W-MON",
+    )
+    date = 0
+    data_columns = np.zeros((len(columns), len(dates)))
+    for i in range(1, len(df)):
+        n_dates = count_month_week_days(
+            day, df[date_index][i - 1].year, df[date_index][i - 1].month
+        )
+        actual_data = [df[column][i - 1] for column in columns]
+        interval = [(df[column][i] - df[column][i - 1]) / n_dates for column in columns]
+        for j in range(n_dates):
+            for k in range(len(actual_data)):
+                data_columns[k][date] = actual_data[k]
+                actual_data[k] += interval[k]
+            date += 1
+    for k in range(len(actual_data)):
+        data_columns[k][date] = actual_data[k]
+        actual_data[k] += interval[k]
+    # Criar um DataFrame com a coluna de datas
+    df = pd.DataFrame({"Data": pd.to_datetime(dates)})
+    # Adicionar dinamicamente as colunas ao DataFrame
+    for nome_coluna, dados_coluna in zip(columns, data_columns):
+        df[nome_coluna] = dados_coluna
+    return df
