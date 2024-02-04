@@ -16,6 +16,7 @@ class RandomWalkModel:
     def fit(self, series):
         self.last_value = series.univariate_values()[-1]
         self.last_date = series.end_time()
+        self.freq = series.freq
         self.first_value = series.univariate_values()[0]
         self.first_date = series.start_time()
         self.column_name = series.columns[0]
@@ -36,7 +37,7 @@ class RandomWalkModel:
             pd.DataFrame(
                 {
                     "Data": pd.date_range(
-                        self.last_date, periods=n + 1, freq=self.last_date.freq
+                        self.last_date, periods=n + 1, freq=self.freq
                     )[1:],
                     self.column_name: predictions,
                 }
@@ -51,7 +52,7 @@ class RandomWalkModel:
         if self.random_state:
             random.seed(self.random_state)
         predictions = list()
-        dates = pd.date_range(self.first_date, self.last_date, freq=self.last_date.freq)
+        dates = pd.date_range(self.first_date, self.last_date, freq=self.freq)
         history = self.first_value
         predictions.append(history)
         for _ in dates:
