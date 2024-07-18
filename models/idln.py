@@ -18,8 +18,7 @@ class IDLN(TorchGenericModel):
         loss_fn=torch.nn.MSELoss(),
         optimizer_cls=torch.optim.Adam,
         window_model=SlidingWindow(),
-        stopping_model=None,
-        device="cpu",
+        pl_trainer_kwargs=None,
     ):
         super().__init__(
             input_chunk_length,
@@ -29,8 +28,7 @@ class IDLN(TorchGenericModel):
             n_epochs,
             random_state,
             window_model,
-            stopping_model,
-            device,
+            pl_trainer_kwargs,
         )
 
         self.bias = bias

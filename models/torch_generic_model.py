@@ -1,14 +1,18 @@
 import pandas as pd
 import numpy as np
 
-from tqdm import tqdm
+try:
+    from tqdm.notebook import tqdm
+except ImportError:
+    from tqdm import tqdm
 
 import torch
+import pytorch_lightning as pl
 
 from ..TimeSeries import TimeSeries
 
 
-class TorchGenericModel(torch.nn.Module):
+class TorchGenericModel(pl.LightningModule):
     def __init__(
         self,
         input_chunk_length,
@@ -18,9 +22,9 @@ class TorchGenericModel(torch.nn.Module):
         n_epochs,
         random_state,
         window_model,
-        stopping_model,
-        device,
+        pl_trainer_kwargs,
     ):
+
         super().__init__()
         self.n_epochs = n_epochs
         self.input_chunk_length = input_chunk_length
@@ -34,12 +38,22 @@ class TorchGenericModel(torch.nn.Module):
         self.optimizer = None
 
         self.window_model = window_model
-        self.window_model(input_chunk_length, output_chunk_length, batch_size)
-        self.stopping_model = stopping_model
-        self.device = device
+        self.window_model(input_chunk_length, output_chunk_length)
+        self.pl_trainer_kwargs = (
+            pl_trainer_kwargs if pl_trainer_kwargs is not None else {}
+        )
 
     def forward(self, x):
         return x
+
+    def training_step(self, batch, batch_idx):
+        inputs, labels = batch
+        predictions = self.forward(inputs)
+        loss = self.loss_fn(predictions, labels)
+        return loss
+
+    def configure_optimizers(self):
+        return self.optimizer
 
     def fit(self, series):
         if type(series) == TimeSeries:
@@ -54,44 +68,49 @@ class TorchGenericModel(torch.nn.Module):
                 for serie in series
             ]
         else:
-            raise ValueError("series must be Union(TimeSeries | list[TimeSeries])")
+            raise ValueError("Series must be Union(TimeSeries | list[TimeSeries])")
+
+        for i, serie in enumerate(series):
+            inputs = torch.stack(
+                [
+                    torch.from_numpy(np.array(item[0]).astype(np.float32))
+                    for item in serie
+                ]
+            )
+            labels = torch.stack(
+                [
+                    torch.from_numpy(np.array(item[1]).astype(np.float32))
+                    for item in serie
+                ]
+            )
+
+            series[i] = torch.utils.data.DataLoader(
+                torch.utils.data.TensorDataset(inputs, labels),
+                batch_size=self.batch_size,
+                shuffle=False,
+            )
         self.fit_called = True
 
-        if self.random_state != None:
+        if self.random_state is not None:
             torch.manual_seed(self.random_state)
             np.random.seed(self.random_state)
 
-        model = self.to(self.device)
+        trainer = pl.Trainer(max_epochs=self.n_epochs, **self.pl_trainer_kwargs)
 
-        try:
-            with tqdm(total=self.n_epochs, desc="Epoch") as progress_bar:
-                for epoch in range(self.n_epochs):
-                    total_loss = 0.0
-                    for serie in series:
-                        for batch_inputs, batch_labels in serie:
-                            predictions = model.forward(batch_inputs.to(self.device))
-                            loss = self.loss_fn(
-                                predictions, batch_labels.to(self.device)
-                            )
+        for serie in series:
+            trainer.fit(self, serie)
 
-                            self.optimizer.zero_grad()
-                            loss.backward()
-                            self.optimizer.step()
-                            total_loss += loss.item()
-
-                    progress_bar.update(1)
-                    progress_bar.set_postfix(loss=total_loss)
-                    if self.stopping_model != None:
-                        self.stopping_model(total_loss)
-        except KeyboardInterrupt:
-            self.n_epochs = epoch
-        except StopIteration:
-            self.n_epochs = epoch
+    def predict_window(self, test_input):
+        test_input_tensor = torch.tensor(test_input, dtype=torch.float32).view(
+            1, self.input_chunk_length
+        )
+        output = self.forward(test_input_tensor)
+        return output.cpu().detach().numpy().flatten()
 
     def predict(self, n, series=None):
         if not self.fit_called:
             raise RuntimeError("fit() was not called before predict()")
-        if series == None:
+        if series is None:
             try:
                 test_input = self.last_data
                 data_freq = self.data_freq
@@ -108,24 +127,23 @@ class TorchGenericModel(torch.nn.Module):
         else:
             raise ValueError("series must be TimeSeries")
 
-        if self.random_state != None:
+        if self.random_state is not None:
             torch.manual_seed(self.random_state)
             np.random.seed(self.random_state)
 
         predicted_outputs = []
-        model = self.to(self.device)
-        with tqdm(total=n // self.output_chunk_length + 1, desc="Prediction") as progress_bar:
+
+        with tqdm(
+            total=n // self.output_chunk_length + 1, desc="Prediction"
+        ) as progress_bar:
             for _ in range(n // self.output_chunk_length + 1):
-                output = model.forward(
-                    torch.tensor(test_input, dtype=torch.float32)
-                    .view(1, self.input_chunk_length)
-                    .to(self.device)
-                )
-                for predicted_value in output.numpy(force=True)[0]:
+                output = self.predict_window(test_input)
+                for predicted_value in output:
                     predicted_outputs.append(predicted_value)
                     test_input.append(predicted_value)
                 test_input = test_input[self.output_chunk_length :]
                 progress_bar.update(1)
+
         if type(data_freq) == int:
             predicted_outputs = TimeSeries.from_times_and_values(
                 pd.Index(
@@ -143,10 +161,46 @@ class TorchGenericModel(torch.nn.Module):
             )
         return predicted_outputs
 
+    def save_model(self, file_path):
+        # Save model state and additional attributes on CPU
+        self.cpu()  # Move the model to CPU before saving
+        torch.save(
+            {
+                "model_state_dict": self.state_dict(),
+                "optimizer_state_dict": (
+                    self.optimizer.state_dict() if self.optimizer else None
+                ),
+                "attributes": {
+                    k: v for k, v in self.__dict__.items() if not k.startswith("_")
+                },
+            },
+            file_path,
+        )
+
+    def load_model(self, file_path):
+        # Load model state and additional attributes
+        checkpoint = torch.load(file_path, map_location="cpu")  # Load checkpoint on CPU
+
+        # Load the state dict into the model
+        self.load_state_dict(checkpoint["model_state_dict"])
+
+        if (
+            "optimizer_state_dict" in checkpoint
+            and checkpoint["optimizer_state_dict"] is not None
+        ):
+            if self.optimizer is not None:
+                self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+
+        # Restore additional attributes
+        for k, v in checkpoint["attributes"].items():
+            setattr(self, k, v)
+
     def __str__(self):
         return "{}({})".format(
-            self.__class__.__name__, 
-            ', '.join(f'{nome}={valor}'
-                      for nome, valor
-                      in self.__dict__.items()
-                      if not nome.startswith("_")))
+            self.__class__.__name__,
+            ", ".join(
+                f"{nome}={valor}"
+                for nome, valor in self.__dict__.items()
+                if not nome.startswith("_")
+            ),
+        )

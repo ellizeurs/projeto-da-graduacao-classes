@@ -20,8 +20,7 @@ class IMP(TorchGenericModel):
         loss_fn=torch.nn.MSELoss(),
         optimizer_cls=torch.optim.Adam,
         window_model=SlidingWindow(),
-        stopping_model=None,
-        device="cpu",
+        pl_trainer_kwargs=None,
     ):
         super().__init__(
             input_chunk_length,
@@ -31,8 +30,7 @@ class IMP(TorchGenericModel):
             n_epochs,
             random_state,
             window_model,
-            stopping_model,
-            device,
+            pl_trainer_kwargs,
         )
 
         self.hidden_size = hidden_size
@@ -41,16 +39,18 @@ class IMP(TorchGenericModel):
 
         self.embedding = torch.nn.Linear(input_chunk_length, hidden_size)
         self.morph_layer = torch.nn.Sequential(
-        #    torch.nn.Conv1d(hidden_size, hidden_size, kernel_size=kernel_size, padding=padding),
+            #    torch.nn.Conv1d(hidden_size, hidden_size, kernel_size=kernel_size, padding=padding),
             torch.nn.ReLU(),
-        #    torch.nn.Conv1d(hidden_size, hidden_size, kernel_size=kernel_size, padding=padding),
+            #    torch.nn.Conv1d(hidden_size, hidden_size, kernel_size=kernel_size, padding=padding),
         )
         self.output_layer = torch.nn.Linear(hidden_size, output_chunk_length)
 
         self.optimizer = optimizer_cls(self.parameters(), lr=lr)
 
     def forward(self, x):
-        out = torch.nn.functional.avg_pool1d(x, kernel_size=self.kernel_size, stride=1, padding=self.padding)
+        out = torch.nn.functional.avg_pool1d(
+            x, kernel_size=self.kernel_size, stride=1, padding=self.padding
+        )
         out = self.embedding(out)
         out = self.morph_layer(out)
         out = self.output_layer(out)

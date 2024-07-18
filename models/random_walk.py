@@ -1,7 +1,5 @@
 import pandas as pd
 
-import torch
-
 from ..TimeSeries import TimeSeries
 
 import random
