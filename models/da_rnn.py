@@ -21,6 +21,7 @@ class DA_RNN(TorchGenericModel):
         loss_fn=torch.nn.MSELoss(),
         optimizer_cls=torch.optim.Adam,
         window_model=SlidingWindow(),
+        pre_processing=None,
         pl_trainer_kwargs=None,
     ):
         super().__init__(
@@ -31,6 +32,7 @@ class DA_RNN(TorchGenericModel):
             n_epochs,
             random_state,
             window_model,
+            pre_processing,
             pl_trainer_kwargs,
         )
 
