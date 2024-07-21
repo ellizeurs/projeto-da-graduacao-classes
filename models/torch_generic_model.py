@@ -199,8 +199,8 @@ class TorchGenericModel(pl.LightningModule):
         else:
             predicted_outputs = TimeSeries.from_times_and_values(
                 pd.date_range(
-                    start=last_index, periods=len(predicted_outputs) + 1, freq=data_freq
-                )[1:],
+                    start=last_index, periods=len(predicted_outputs), freq=data_freq
+                ),
                 predicted_outputs,
             )
         return predicted_outputs
