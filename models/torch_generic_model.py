@@ -165,7 +165,7 @@ class TorchGenericModel(pl.LightningModule):
         if not self.fit_called:
             raise RuntimeError("evaluate() was not called before predict()")
         if type(val) == TimeSeries:
-            last_index = val.time_index[self.input_chunk_length :]
+            last_index = val.time_index[self.input_chunk_length]
             data_freq = val.freq
             val = val.univariate_values().tolist()
         else:
@@ -179,11 +179,9 @@ class TorchGenericModel(pl.LightningModule):
 
         predicted_outputs = []
 
-        with tqdm(
-            total = len(val), desc="Prediction"
-        ) as progress_bar:
-            for val_l, label_l in zip(val[:, 0], val[:, 1]):
-                output = self.predict_window(val_l)
+        with tqdm(total=len(val), desc="Prediction") as progress_bar:
+            for val_l in val:
+                output = self.predict_window(val_l[0])
                 for predicted_value in output:
                     predicted_outputs.append(predicted_value)
                 progress_bar.update(1)
@@ -193,15 +191,17 @@ class TorchGenericModel(pl.LightningModule):
                 pd.Index(
                     [
                         i + data_freq + last_index
-                        for i in range(0, data_freq * len(val), data_freq)
+                        for i in range(0, data_freq * len(predicted_outputs), data_freq)
                     ]
                 ),
-                predicted_outputs[:len(val)],
+                predicted_outputs,
             )
         else:
             predicted_outputs = TimeSeries.from_times_and_values(
-                pd.date_range(start=last_index, periods=len(val) + 1, freq=data_freq)[1:],
-                predicted_outputs[:len(val)],
+                pd.date_range(
+                    start=last_index, periods=len(predicted_outputs) + 1, freq=data_freq
+                )[1:],
+                predicted_outputs,
             )
         return predicted_outputs
 
