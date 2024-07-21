@@ -10,7 +10,7 @@ from .TimeSeries import TimeSeries
 from darts.metrics import mape
 
 from .const import FIG_SIZE
-from .metrics.sle import sle
+from .metrics import sle
 
 
 def plot_trend_line(series, title=None, order=1):
