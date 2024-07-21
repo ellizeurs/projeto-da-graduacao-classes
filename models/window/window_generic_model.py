@@ -13,10 +13,10 @@ class WindowGenericModel:
             series = series.univariate_values()
         return series
 
-    def _unembed_time_series(self, embedded_data):
+    def _unembed_time_series(self, input, target):
         if (self.input_chunk_length == None) or (self.output_chunk_length == None):
             return None
-        return embedded_data
+        return input, target
 
     def __call__(self, input_chunk_length, output_chunk_length):
         self.input_chunk_length = input_chunk_length

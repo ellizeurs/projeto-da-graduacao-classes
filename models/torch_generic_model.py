@@ -161,6 +161,50 @@ class TorchGenericModel(pl.LightningModule):
             )
         return predicted_outputs
 
+    def evaluate(self, val):
+        if not self.fit_called:
+            raise RuntimeError("evaluate() was not called before predict()")
+        if type(val) == TimeSeries:
+            last_index = val.time_index[self.input_chunk_length :]
+            data_freq = val.freq
+            val = val.univariate_values().tolist()
+        else:
+            raise ValueError("series must be TimeSeries")
+
+        val = self.window_model.embed_time_series(val)
+
+        if self.random_state is not None:
+            torch.manual_seed(self.random_state)
+            np.random.seed(self.random_state)
+
+        predicted_outputs = []
+
+        with tqdm(
+            total = len(val), desc="Prediction"
+        ) as progress_bar:
+            for val_l, label_l in zip(val[:, 0], val[:, 1]):
+                output = self.predict_window(val_l)
+                for predicted_value in output:
+                    predicted_outputs.append(predicted_value)
+                progress_bar.update(1)
+
+        if type(data_freq) == int:
+            predicted_outputs = TimeSeries.from_times_and_values(
+                pd.Index(
+                    [
+                        i + data_freq + last_index
+                        for i in range(0, data_freq * len(val), data_freq)
+                    ]
+                ),
+                predicted_outputs[:len(val)],
+            )
+        else:
+            predicted_outputs = TimeSeries.from_times_and_values(
+                pd.date_range(start=last_index, periods=len(val) + 1, freq=data_freq)[1:],
+                predicted_outputs[:len(val)],
+            )
+        return predicted_outputs
+
     def save_model(self, file_path):
         # Save model state and additional attributes on CPU
         self.cpu()  # Move the model to CPU before saving

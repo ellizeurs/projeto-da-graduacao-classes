@@ -1,4 +1,3 @@
-import numpy as np
 from .window_generic_model import WindowGenericModel
 
 
@@ -31,26 +30,77 @@ class Takens(WindowGenericModel):
         if series == None:
             raise ValueError("This class is not defined")
         N = len(series)
-        embedded = np.zeros(
-            (
-                N - (self.input_chunk_length + self.output_chunk_length - 1) * self.tau,
-                self.input_chunk_length + self.output_chunk_length,
-            )
-        )
 
-        for i in range(
-            N - (self.input_chunk_length + self.output_chunk_length - 1) * self.tau
-        ):
-            for j in range(self.input_chunk_length + self.output_chunk_length):
-                embedded[i, j] = series[i + j * self.tau]
-
-        labels = []
         inputs = []
+        targets = []
+
+        # Itera sobre a série temporal para criar os inputs e targets
+        for i in range(
+            N - self.input_chunk_length * self.tau - self.output_chunk_length + 1
+        ):
+            try:
+                target_vector = [
+                    data[i + j * self.tau + self.input_chunk_length * self.tau]
+                    for j in range(self.output_chunk_length)
+                ]
+            except:
+                target_vector = [None for j in range(self.output_chunk_length)]
+            targets.append(target_vector)
+
+            # Cria um vetor de input
+            input_vector = [data[i + j * self.tau] for j in self.input_chunk_length]
+            inputs.append(input_vector)
 
         data = []
-        for i in embedded:
-            data.append(
-                (i[: -self.output_chunk_length], i[-self.output_chunk_length :])
-            )
+        for input, target in zip(inputs, targets):
+            data.append((input.copy(), target.copy()))
 
         return data
+
+    def unembed_time_series(self, input, target):
+        """
+        Reverte o processo de criação de embedding e alvos para séries temporais.
+
+        Parameters:
+        - inputs: Matriz de inputs para o modelo.
+        - targets: Matriz de targets para o modelo.
+
+        Returns:
+        - data_reconstructed: Série temporal reconstruída.
+        """
+
+        series = super()._unembed_time_series(input, target)
+        if series == None:
+            raise ValueError("This class is not defined")
+        N = len(series)
+
+        inputs_aux, targets_aux = self.embed_time_series([i for i in range(10000)])
+
+        data_reconstructed = [None]
+
+        while data_reconstructed[-1] != None or len(data_reconstructed) == 1:
+            for i in range(10000):
+                data_reconstructed.append(None)
+            for input_i, input in zip(inputs_aux, series):
+                for input_j, value in zip(input_i, input[0]):
+                    if value != None:
+                        try:
+                            data_reconstructed[input_j] = value
+                        except:
+                            pass
+
+            for target_i, target in zip(targets_aux, series):
+                for target_j, value in zip(target_i, target[1]):
+                    if value != None:
+                        try:
+                            data_reconstructed[target_j] = value
+                        except:
+                            pass
+
+            for i in reversed(range(len(data_reconstructed))):
+                if data_reconstructed[i] == None:
+                    data_reconstructed = data_reconstructed[:i]
+                else:
+                    break
+
+        return data_reconstructed
