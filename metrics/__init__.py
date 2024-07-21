@@ -1,3 +1,4 @@
+from darts.metrics import mape, mse, rmse, sle
+
 from .hurst import Hurst
-from .sle import sle
 from .utheil import UTheil
