@@ -22,7 +22,7 @@ class TorchGenericModel(pl.LightningModule):
         n_epochs,
         random_state,
         window_model,
-        pre_processing,
+        preprocessing,
         pl_trainer_kwargs,
     ):
 
@@ -39,7 +39,7 @@ class TorchGenericModel(pl.LightningModule):
         self.optimizer = None
 
         self.window_model = window_model
-        self.pre_processing = pre_processing
+        self.preprocessing = preprocessing
         self.window_model(input_chunk_length, output_chunk_length)
         self.pl_trainer_kwargs = (
             pl_trainer_kwargs if pl_trainer_kwargs is not None else {}
@@ -73,7 +73,7 @@ class TorchGenericModel(pl.LightningModule):
             raise ValueError("Series must be Union(TimeSeries | list[TimeSeries])")
 
         for i, serie in enumerate(series):
-            series[i] = self.apply_pre_processing(serie)
+            series[i] = self.apply_preprocessing(serie)
 
             inputs = torch.stack(
                 [
@@ -105,41 +105,42 @@ class TorchGenericModel(pl.LightningModule):
             trainer.fit(self, serie)
 
     def predict_window(self, test_input):
-        test_input = test_input[0]
         test_input_tensor = torch.tensor(test_input, dtype=torch.float32).view(
             1, self.input_chunk_length
         )
         output = self.forward(test_input_tensor)
         return output.cpu().detach().numpy().flatten()
 
-    def apply_pre_processing(self, series):
-        for pre_processing in self.pre_processing:
+    def apply_preprocessing(self, series):
+        for preprocessing in self.preprocessing:
             for j, s in enumerate(series):
                 series[j] = (
-                    pre_processing.fit_transform(np.array(s[0]).reshape(-1, 1))
+                    preprocessing.fit_transform(np.array(s[0]).reshape(-1, 1))
                     .flatten()
                     .tolist(),
-                    pre_processing.transform(np.array(s[1]).reshape(-1, 1))
+                    preprocessing.transform(np.array(s[1]).reshape(-1, 1))
                     .flatten()
                     .tolist(),
                 )
         return series
 
-    def predict_window_with_pre_processing(self, test_input):
-        test_input = self.apply_pre_processing([test_input])
-        output = self.predict_window(test_input)
-        output = self.reverse_pre_processing([(test_input[0], output)], [test_input])
-        return output[1]
+    def predict_window_with_preprocessing(self, test_input):
+        test_input_preprocessed = self.apply_preprocessing([(test_input[0], [0])])
+        output = self.predict_window(test_input_preprocessed[0][0])
+        output = self.reverse_preprocessing(
+            [(test_input_preprocessed[0][0], output)], [test_input]
+        )
+        return output[0][1]
 
-    def reverse_pre_processing(self, series, original_series):
-        for pre_processing in self.pre_processing:
+    def reverse_preprocessing(self, series, original_series):
+        for preprocessing in reversed(self.preprocessing):
             for j, (s, o_s) in enumerate(zip(series, original_series)):
-                pre_processing.fit(np.array(o_s[0]).reshape(-1, 1))
+                preprocessing.fit(np.array(o_s[0]).reshape(-1, 1))
                 series[j] = (
-                    pre_processing.inverse_transform(np.array(s[0]).reshape(-1, 1))
+                    preprocessing.inverse_transform(np.array(s[0]).reshape(-1, 1))
                     .flatten()
                     .tolist(),
-                    pre_processing.inverse_transform(np.array(s[1]).reshape(-1, 1))
+                    preprocessing.inverse_transform(np.array(s[1]).reshape(-1, 1))
                     .flatten()
                     .tolist(),
                 )
@@ -175,7 +176,7 @@ class TorchGenericModel(pl.LightningModule):
             total=n // self.output_chunk_length + 1, desc="Prediction"
         ) as progress_bar:
             for _ in range(n // self.output_chunk_length + 1):
-                output = self.predict_window_with_pre_processing(test_input)
+                output = self.predict_window_with_preprocessing((test_input, [0]))
                 for predicted_value in output:
                     predicted_outputs.append(predicted_value)
                     test_input.append(predicted_value)
@@ -210,7 +211,7 @@ class TorchGenericModel(pl.LightningModule):
             raise ValueError("series must be TimeSeries")
 
         val = self.window_model.embed_time_series(val)
-        val = self.apply_pre_processing(val)
+        val = self.apply_preprocessing(val)
 
         if self.random_state is not None:
             torch.manual_seed(self.random_state)
@@ -220,7 +221,7 @@ class TorchGenericModel(pl.LightningModule):
 
         with tqdm(total=len(val), desc="Prediction") as progress_bar:
             for val_l in val:
-                output = self.predict_window_with_pre_processing(val_l[0])
+                output = self.predict_window_with_preprocessing(val_l[0])
                 for predicted_value in output:
                     predicted_outputs.append(predicted_value)
                 progress_bar.update(1)
