@@ -84,7 +84,7 @@ def eval_model(
     except:
         mape_val = float("inf")
     try:
-        sle_val = np.mean(sle(val_series, pred_series[: len(val_series)]))
+        sle_val = sle(val_series, pred_series[: len(val_series)])
     except:
         sle_val = float("inf")
     if historical:
@@ -95,9 +95,7 @@ def eval_model(
         except:
             mape_train = float("inf")
         try:
-            sle_train = np.mean(
-                sle(target_series[-len(historical_series) :], historical_series)
-            )
+            sle_train = sle(target_series[-len(historical_series) :], historical_series)
         except:
             sle_train = float("inf")
     if plot:
