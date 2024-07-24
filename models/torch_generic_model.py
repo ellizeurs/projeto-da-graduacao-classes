@@ -11,6 +11,8 @@ import pytorch_lightning as pl
 
 from ..TimeSeries import TimeSeries
 
+from ..metrics import mape, mse, rmse, sle, UTheil
+
 
 class TorchGenericModel(pl.LightningModule):
     def __init__(
@@ -182,12 +184,13 @@ class TorchGenericModel(pl.LightningModule):
                 )
         return series
 
-    def predict_window_with_preprocessing(self, test_input):
+    def predict_window_with_preprocessing(self, test_input, reverse=True):
         test_input_preprocessed = self.apply_preprocessing([(test_input[0], [0])])
         output = self.predict_window(test_input_preprocessed[0][0])
-        output = self.reverse_preprocessing(
-            [(test_input_preprocessed[0][0], output)], [test_input]
-        )
+        if reverse:
+            output = self.reverse_preprocessing(
+                [(test_input_preprocessed[0][0], output)], [test_input]
+            )
         return output[0][1]
 
     def reverse_preprocessing(self, series, original_series):
@@ -262,46 +265,36 @@ class TorchGenericModel(pl.LightningModule):
         if not self.fit_called:
             raise RuntimeError("evaluate() was not called before predict()")
         if type(val) == TimeSeries:
-            last_index = val.time_index[self.input_chunk_length]
-            data_freq = val.freq
             val = val.univariate_values().tolist()
         else:
             raise ValueError("series must be TimeSeries")
 
         val = self.window_model.embed_time_series(val)
-        val = self.apply_preprocessing(val)
+        val_scaled = self.apply_preprocessing(val)
 
         if self.random_state is not None:
             torch.manual_seed(self.random_state)
             np.random.seed(self.random_state)
 
         predicted_outputs = []
+        predicted_outputs_original = []
 
         with tqdm(total=len(val), desc="Prediction") as progress_bar:
             for val_l in val:
-                output = self.predict_window_with_preprocessing(val_l[0])
-                for predicted_value in output:
-                    predicted_outputs.append(predicted_value)
+                output_original = self.predict_window_with_preprocessing(val_l[0])
+                predicted_outputs_original.append(output_original)
+                output = self.predict_window_with_preprocessing(val_l[0], False)
+                predicted_outputs.append(output)
                 progress_bar.update(1)
 
-        if type(data_freq) == int:
-            predicted_outputs = TimeSeries.from_times_and_values(
-                pd.Index(
-                    [
-                        i + data_freq + last_index
-                        for i in range(0, data_freq * len(predicted_outputs), data_freq)
-                    ]
-                ),
-                predicted_outputs,
-            )
-        else:
-            predicted_outputs = TimeSeries.from_times_and_values(
-                pd.date_range(
-                    start=last_index, periods=len(predicted_outputs), freq=data_freq
-                ),
-                predicted_outputs,
-            )
-        return predicted_outputs
+        return {
+            "mape": mape(val, predicted_outputs_original),
+            "mse": mse(val, predicted_outputs_original),
+            "rmse": rmse(val, predicted_outputs_original),
+            "sle": sle(val, predicted_outputs_original),
+            "u1": UTheil().calculateU1(val_scaled, predicted_outputs),
+            "u2": UTheil().calculateU1(val_scaled, predicted_outputs),
+        }
 
     def save_model(self, file_path):
         # Save model state and additional attributes on CPU
