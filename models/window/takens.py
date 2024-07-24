@@ -34,6 +34,8 @@ class Takens(WindowGenericModel):
         inputs = []
         targets = []
 
+        data = series
+
         # Itera sobre a série temporal para criar os inputs e targets
         for i in range(
             N - self.input_chunk_length * self.tau - self.output_chunk_length + 1
@@ -48,7 +50,9 @@ class Takens(WindowGenericModel):
             targets.append(target_vector)
 
             # Cria um vetor de input
-            input_vector = [data[i + j * self.tau] for j in self.input_chunk_length]
+            input_vector = [
+                data[i + j * self.tau] for j in range(self.input_chunk_length)
+            ]
             inputs.append(input_vector)
 
         data = []
