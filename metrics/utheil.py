@@ -19,8 +19,8 @@ class UTheil:
         Retorna:
         - Theil U1, no intervalo [0, 1].
         """
-        y_true = y_true.univariate_values()
-        y_pred = y_pred.univariate_values()
+        y_true = np.array(y_true).flatten()
+        y_pred = np.array(y_pred).flatten()
         N = len(y_true)
 
         # Numerador: Raiz quadrada da média dos quadrados das diferenças entre valores reais e previstos.
@@ -55,8 +55,8 @@ class UTheil:
         Retorna:
         - Theil U2.
         """
-        y_true = y_true.univariate_values()
-        y_pred = y_pred.univariate_values()
+        y_true = np.array(y_true).flatten()
+        y_pred = np.array(y_pred).flatten()
         N = len(y_true)
 
         errors_relative = (y_pred[1:] - y_true[1:]) / y_true[:-1]
