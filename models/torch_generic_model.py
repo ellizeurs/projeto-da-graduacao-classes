@@ -270,7 +270,7 @@ class TorchGenericModel(pl.LightningModule):
             raise ValueError("series must be TimeSeries")
 
         val = self.window_model.embed_time_series(val)
-        val_scaled = self.apply_preprocessing(val)
+        val_scaled = self.apply_preprocessing(val.copy())
 
         if self.random_state is not None:
             torch.manual_seed(self.random_state)
