@@ -194,9 +194,26 @@ class TorchGenericModel(pl.LightningModule):
         return output
 
     def reverse_preprocessing(self, series, original_series):
-        for preprocessing in reversed(self.preprocessing):
-            for j, (s, o_s) in enumerate(zip(series, original_series)):
-                preprocessing.fit(np.array(o_s[0]).reshape(-1, 1))
+        preprocessed_series = [original_series.copy()]
+        for preprocessing in self.preprocessing:
+            for j, s in enumerate(original_series):
+                original_series[j] = (
+                    preprocessing.fit_transform(np.array(s).reshape(-1, 1))
+                    .flatten()
+                    .tolist()
+                )
+            preprocessed_series.append(original_series.copy())
+        preprocessed_series = preprocessed_series[:-1]
+        for preprocessing, o_s_geral in zip(
+            reversed(self.preprocessing), reversed(preprocessed_series)
+        ):
+            for j, (s, o_s) in enumerate(zip(series, o_s_geral)):
+                preprocessing.fit(np.array(o_s).reshape(-1, 1))
+                original_series[j] = (
+                    preprocessing.inverse_transform(np.array(o_s).reshape(-1, 1))
+                    .flatten()
+                    .tolist()
+                )
                 series[j] = (
                     preprocessing.inverse_transform(np.array(s[0]).reshape(-1, 1))
                     .flatten()

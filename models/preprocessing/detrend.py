@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class Detrend:
     def __init__(self):
         self.trend_line = None
@@ -9,11 +10,11 @@ class Detrend:
         # Garantir que data seja um array 2D
         if len(data.shape) == 1:
             data = data.reshape(-1, 1)
-        
+
         x = np.arange(0, len(data))
         self.trend_line = np.zeros_like(data)
         self.order = order
-        
+
         # Ajustar para cada coluna em data
         for i in range(data.shape[1]):
             coeffs = np.polyfit(x, data[:, i], order)
@@ -23,7 +24,7 @@ class Detrend:
         # Garantir que data seja um array 2D
         if len(data.shape) == 1:
             data = data.reshape(-1, 1)
-        
+
         x = np.arange(0, len(self.trend_line))
         trend_line = np.zeros_like(data)
 
@@ -32,7 +33,9 @@ class Detrend:
             z = np.polyfit(x, self.trend_line[:, i], self.order)
             p = np.poly1d(z)
             if len(self.trend_line) != len(data):
-                trend_line[:, i] = np.array([p(value + len(self.trend_line)) for value in range(len(data))])
+                trend_line[:, i] = np.array(
+                    [p(value + len(self.trend_line)) for value in range(len(data))]
+                )
             else:
                 trend_line[:, i] = self.trend_line[:, i]
 
@@ -46,7 +49,7 @@ class Detrend:
         # Garantir que data seja um array 2D
         if len(data.shape) == 1:
             data = data.reshape(-1, 1)
-        
+
         x = np.arange(0, len(self.trend_line))
         trend_line = np.zeros_like(data)
 
@@ -55,7 +58,9 @@ class Detrend:
             z = np.polyfit(x, self.trend_line[:, i], self.order)
             p = np.poly1d(z)
             if len(self.trend_line) != len(data):
-                trend_line[:, i] = np.array([p(value + len(self.trend_line)) for value in range(len(data))])
+                trend_line[:, i] = np.array(
+                    [p(value + len(self.trend_line)) for value in range(len(data))]
+                )
             else:
                 trend_line[:, i] = self.trend_line[:, i]
 
