@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 from datetime import datetime, timedelta
+import seaborn as sns
 
 import torch
 
@@ -44,6 +45,29 @@ def plot_series_labels(series, labels, title=None):
     if title:
         plt.title(title)
     plt.show()
+
+
+def plot_correlation_matrix(series, annot=False):
+    # Calculando a matriz de correlação
+    correlation_matrix = np.corrcoef([serie.univariate_values() for serie in series])
+
+    # Gerando o heatmap
+    plt.figure(figsize=FIG_SIZE)
+    ax = sns.heatmap(
+        correlation_matrix,
+        annot=annot,
+        cmap="coolwarm",
+        xticklabels=[serie.columns[0] for serie in series],
+        yticklabels=[serie.columns[0] for serie in series],
+        linewidths=0,
+    )
+    plt.xticks(rotation=45)
+    plt.yticks(rotation=0)
+    ax.grid(False)
+    # Exibindo o gráfico
+    plt.show()
+
+    return correlation_matrix
 
 
 # this function evaluates a model on a given validation set for n time-steps
