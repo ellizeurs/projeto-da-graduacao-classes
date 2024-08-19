@@ -47,7 +47,7 @@ def plot_series_labels(series, labels, title=None):
     plt.show()
 
 
-def plot_correlation_matrix(series, annot=False):
+def plot_correlation_matrix(series, annot=False, **kwargs):
     # Calculando a matriz de correlação
     correlation_matrix = np.corrcoef([serie.univariate_values() for serie in series])
 
@@ -60,6 +60,7 @@ def plot_correlation_matrix(series, annot=False):
         xticklabels=[serie.columns[0] for serie in series],
         yticklabels=[serie.columns[0] for serie in series],
         linewidths=0,
+        **kwargs
     )
     plt.xticks(rotation=45)
     plt.yticks(rotation=0)
