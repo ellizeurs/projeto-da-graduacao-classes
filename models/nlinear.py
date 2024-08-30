@@ -5,7 +5,7 @@ from .torch_generic_model import TorchGenericModel
 from .window.sliding_window import SlidingWindow
 
 
-class NLinearModel(TorchGenericModel):
+class NLinear(TorchGenericModel):
     def __init__(
         self,
         input_chunk_length,
